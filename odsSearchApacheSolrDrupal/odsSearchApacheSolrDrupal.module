@@ -1,0 +1,88 @@
+<?php
+
+function odsSearchApacheSolrDrupal_apachesolr_search_result_alter(stdClass $document, array &$extra, DrupalSolrQueryInterface $query) {
+    // ApacheSolrDocument $document
+
+    /* drupal_debug("Document : ".print_r($document,true));
+
+    foreach($extra as $e) {
+        drupal_debug("Extra: ".print_r($e,true));
+    } */
+    //drupal_debug("Query    : ".print_r($query,true));
+
+    // that fails, types must be different
+    //$document->ds_changed = $document->updated;
+}
+
+
+function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
+    dd("---------- query3 ---------------");
+    drupal_debug("Query    : ".print_r($query,true));
+    foreach($query->getSolrsort() as $s)
+        drupal_debug("Query sort: ".$s);
+    $query->setSolrsort("Title","desc");
+    foreach($query->getAvailableSorts() as $a) {
+        dd(" available sort: ".implode(' ', $a));
+    }
+
+    // how to add a facet query?
+    // $query->addFilter("age","18-U");
+    // how to sort?
+    $query->setAvailableSort("author", array("author asc"));
+    $query->setSolrsort("author", "asc");
+    // or add Param (ugly!)
+    //$query->addParam("sort", "updated desc");
+
+    /* foreach($query->getSolrsort() as $s)
+        drupal_debug("Query sort: ".$s); */
+
+    $a = $query->getParams()['fl'];
+    $a[]="updated";
+    $a[]="author";
+    $a[]="source";
+    $a[]="age";
+    $a[]="copyright";
+
+    $query->addParam('fl', $a);
+
+
+    dd("---------- /query3 --------------");
+}
+
+/** This hook to hook_apachesolr_index_document_build adds text-fields needed to be indexed.  */
+function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
+    dd("building entity type: ".$entity_type);
+    dd("From entity: ".print_r($entity, true));
+    dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
+    $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
+    $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
+    // $document->addField("source",  $entity->field_data_provider);
+    $document->addField("age",  $entity->field_educational_typicalagerang['und'][0]['value']);
+    $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
+
+    dd("Into: ".implode(' ',get_object_vars($document)));
+}
+
+function odsSearchApacheSolrDrupal_apachesolr_index_document_build_educational_object(ApacheSolrDocument $document, $entity, $env_id) {
+    // is not called!
+    dd("Please mail paul@cermat.org if you see me in the log. A wonder has happened.");
+}
+
+
+// ============================== THEME HOOKS =======================================
+
+/* function odsSearchApacheSolrDrupal_theme($existing, $type, $theme, $path) {
+    return array(
+        odsSearchApacheSolrDrupal_hookname
+    )
+} */
+
+
+// ============================ THEME FUNCTIONS ============================================
+function printIfThere($text) {
+    if($text) {
+        print($text);
+        print(" • ");
+    }
+}
+

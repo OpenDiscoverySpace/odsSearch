@@ -1,0 +1,3 @@
+name = ODS Search ApacheSolrDrupal
+description = Tunings to the Apache Solr Search module of Drupal for ODS needs
+core = 7.x
