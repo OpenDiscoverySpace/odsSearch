@@ -1,0 +1,54 @@
+Diagnostic-assessment;ODS-Assess-1
+Peer-assessment;ODS-Assess-2
+Self-assessment;ODS-Assess-3
+Summative assessment;ODS-Assess-4
+Not assessed;ODS-Assess-5
+Cognitive;ODS-EO-01
+Knowledge;ODS-EO-01-01
+Factual;ODS-EO-01-01-01
+Conceptual;ODS-EO-01-01-02
+Procedural;ODS-EO-01-01-03
+Meta – cognitive;ODS-EO-01-01-04
+Process;ODS-EO-01-02
+To remember;ODS-EO-01-02-01
+To understand;ODS-EO-01-02-02
+To apply;ODS-EO-01-02-03
+To think critically and creatively;ODS-EO-01-02-04
+Affective;ODS-EO-02
+To pay attention;ODS-EO-02-01
+To respond and participate;ODS-EO-02-02
+To organize values;ODS-EO-02-03
+To form and follow a system of values;ODS-EO-02-04
+Psychomotor;ODS-EO-03
+To imitate and try;ODS-EO-03-01
+To perform confidentially following instructions;ODS-EO-03-02
+To perform independently, skillfully and precisely;ODS-EO-03-03
+To adapt and perform creatively;ODS-EO-03-04
+Audio-based;ODS-LE-1
+Computer-based;ODS-LE-2
+Field-based;ODS-LE-3
+Lab-based;ODS-LE-4
+Lecture-based;ODS-LE-5
+Simulator;ODS-LE-6
+Video;ODS-LE-7
+Work-based;ODS-LE-8
+Visual;ODS-SP-1
+Auditive;ODS-SP-2
+Psychomotor;ODS-SP-3
+Behavioural;ODS-SP-4
+Behaviourist;ODS-TA-01
+Programmed instruction;ODS-TA-01-01
+Drill and practise;ODS-TA-01-02
+Cognitivist;ODS-TA-02
+Direct instruction;ODS-TA-02-01
+Collaborative learning;ODS-TA-02-02
+Inquiry learning;ODS-TA-02-03
+Problem – based;ODS-TA-02-04
+Reciprocal teaching;ODS-TA-02-05
+Constructivist;ODS-TA-03
+Cognitive apprenticeship;ODS-TA-03-01
+Socratic instruction;ODS-TA-03-02
+Experiential learning;ODS-TA-03-03
+Action research;ODS-TA-03-04
+Communities of practice;ODS-TA-03-05
+Design-based learning;ODS-TA-03-06
