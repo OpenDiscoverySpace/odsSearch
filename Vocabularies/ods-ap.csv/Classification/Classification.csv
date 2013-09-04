@@ -1,73 +1,59 @@
-assessment
-assessment;Diagnostic-assessment
-assessment;Peer-assessment
-assessment;Self-assessment
-assessment;Summative assessment
-assessment;Not assessed
-
-educational objective
-educational objective;Cognitive
-educational objective;Knowledge
-educational objective;Factual
-educational objective;Conceptual
-educational objective;Procedural
-educational objective;Meta – cognitive
-educational objective;Process
-educational objective;To remember
-educational objective;To understand
-educational objective;To apply
-educational objective;To think critically and creatively
-educational objective;Affective
-educational objective;To pay attention
-educational objective;To respond and participate
-educational objective;To organize values
-educational objective;To form and follow a system of values
-educational objective;Psychomotor
-educational objective;To imitate and try
-educational objective;To perform confidentially following instructions
-educational objective;To perform independently, skillfully and precisely
-educational objective;To adapt and perform creatively
-
-learning environment
-learning environment;Audio-based
-learning environment;Computer-based
-learning environment;Field-based
-learning environment;Lab-based
-learning environment;Lecture-based
-learning environment;Simulator
-learning environment;Video
-learning environment;Work-based
-
-special need
-special need;Visual
-special need;Auditive
-special need;Psychomotor
-special need;Behavioural
-
-teaching approach
-teaching approach;Behaviourist
-teaching approach;Programmed instruction
-teaching approach;Drill and practise
-teaching approach;Cognitivist
-teaching approach;Direct instruction
-teaching approach;Collaborative learning
-teaching approach;Inquiry learning
-teaching approach;Problem – based
-teaching approach;Reciprocal teaching
-teaching approach;Constructivist
-teaching approach;Cognitive apprenticeship
-teaching approach;Socratic instruction
-teaching approach;Experiential learning
-teaching approach;Action research
-teaching approach;Communities of practice
-teaching approach;Design-based learning
-
-
-
-
-
-
-
-
-
-
+Assessment
+Assessment;Diagnostic-assessment
+Assessment;Peer-assessment
+Assessment;Self-assessment
+Assessment;Summative assessment
+Assessment;Not assessed
+Educational objective
+Educational objective;Cognitive
+Educational objective;Cognitive;Knowledge
+Educational objective;Cognitive;Knowledge;Factual
+Educational objective;Cognitive;Knowledge;Conceptual
+Educational objective;Cognitive;Knowledge;Procedural
+Educational objective;Cognitive;Knowledge;Meta Â– cognitive
+Educational objective;Process
+Educational objective;Process;To remember
+Educational objective;Process;To understand
+Educational objective;Process;To apply
+Educational objective;Process;To think critically and creatively
+Educational objective;Affective
+Educational objective;Affective;To pay attention
+Educational objective;Affective;To respond and participate
+Educational objective;Affective;To organize values
+Educational objective;Affective;To form and follow a system of values
+Educational objective;Psychomotor
+Educational objective;Psychomotor;To imitate and try
+Educational objective;Psychomotor;To perform confidentially following instructions
+Educational objective;Psychomotor;To perform independently, skillfully and precisely
+Educational objective;Psychomotor;To adapt and perform creatively
+Learning environment
+Learning environment;Audio-based
+Learning environment;Computer-based
+Learning environment;Field-based
+Learning environment;Lab-based
+Learning environment;Lecture-based
+Learning environment;Simulator
+Learning environment;Video
+Learning environment;Work-based
+Special need
+Special need;Visual
+Special need;Auditive
+Special need;Psychomotor
+Special need;Behavioural
+Teaching approach
+Teaching approach;Behaviourist
+Teaching approach;Behaviourist;Programmed instruction
+Teaching approach;Behaviourist;Drill and practise
+Teaching approach;Cognitivist
+Teaching approach;Cognitivist;Direct instruction
+Teaching approach;Cognitivist;Collaborative learning
+Teaching approach;Cognitivist;Inquiry learning
+Teaching approach;Cognitivist;Problem Â– based
+Teaching approach;Cognitivist;Reciprocal teaching
+Teaching approach;Constructivist
+Teaching approach;Constructivist;Cognitive apprenticeship
+Teaching approach;Constructivist;Socratic instruction
+Teaching approach;Constructivist;Experiential learning
+Teaching approach;Constructivist;Action research
+Teaching approach;Constructivist;Communities of practice
+Teaching approach;Constructivist;Design-based learning
