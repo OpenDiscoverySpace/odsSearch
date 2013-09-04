@@ -17,9 +17,9 @@ function odsSearchApacheSolrDrupal_apachesolr_search_result_alter(stdClass $docu
 
 function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
     dd("---------- query3 ---------------");
-    drupal_debug("Query    : ".print_r($query,true));
+    dd("Query    : ".print_r($query,true));
     foreach($query->getSolrsort() as $s)
-        drupal_debug("Query sort: ".$s);
+        dd("Query sort: ".$s);
     $query->setSolrsort("Title","desc");
     foreach($query->getAvailableSorts() as $a) {
         dd(" available sort: ".implode(' ', $a));
@@ -36,11 +36,13 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     /* foreach($query->getSolrsort() as $s)
         drupal_debug("Query sort: ".$s); */
 
+    // returned fields
     $a = $query->getParams()['fl'];
     $a[]="updated";
     $a[]="author";
     $a[]="source";
-    $a[]="age";
+    $a[]="ageRange";
+    $a[]="age"; // ??
     $a[]="copyright";
 
     $query->addParam('fl', $a);
@@ -51,16 +53,32 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
 
 /** This hook to hook_apachesolr_index_document_build adds text-fields needed to be indexed.  */
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
-    dd("building entity type: ".$entity_type);
-    dd("From entity: ".print_r($entity, true));
-    dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
+    //dd("building entity type: ".$entity_type);
+    //dd("From entity: ".print_r($entity, true));
+    //dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
     $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
     $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
     // $document->addField("source",  $entity->field_data_provider);
-    $document->addField("age",  $entity->field_educational_typicalagerang['und'][0]['value']);
     $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
+    $ageRange = $entity->field_educational_typicalagerang['und'][0]['value'];
+    if($ageRange) {
+        $document->addField("ageRange",  $ageRange);
+        try {
+            $ages=explode("-",$ageRange);
+            if(strtolower($ages[0])=='u') $ages[0] = '0';
+            if(strtolower($ages[1])=='u') $ages[1] = '25';
+            $agesI = array(intval($ages[0]),intval($ages[1]));
+            for($i=$agesI[0]; $i<$agesI[1]; $i++) {
+                $document->addField("age",  strval($i));
+                //dd("age: ".$i);
+            }
+        } catch(Exception $x) {
+            dd("Warning: ".$x);
+        }
+    }
 
-    dd("Into: ".implode(' ',get_object_vars($document)));
+
+    //dd("Into: ".implode(' ',get_object_vars($document)));
 }
 
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build_educational_object(ApacheSolrDocument $document, $entity, $env_id) {
@@ -68,6 +86,58 @@ function odsSearchApacheSolrDrupal_apachesolr_index_document_build_educational_o
     dd("Please mail paul@cermat.org if you see me in the log. A wonder has happened.");
 }
 
+// FACET HOOKS
+
+/**
+ * Implements hook_facetapi_facet_info.
+ * @param array $searcher_info
+ * @return array
+ **/
+function odsSearchApacheSolrDrupal_facetapi_facet_info(array $searcher_info) {
+    $facets = array();
+    // Facets are usually associated with the type of content stored in the index.
+    //dd("searchers: ".print_r($searcher_info, true));
+    if (isset($searcher_info['types']['node'])) {
+        $facets['author'] = array(
+            'name' => 'author',
+            'label' => t('Author'),
+            'description' => t('The author that created the resource.'),
+            'field' => 'author',
+            'dependency plugins' => array('role'), // ???
+            'default widget' => 'links',
+            'allowed operators' => array(FACETAPI_OPERATOR_AND => TRUE, FACETAPI_OPERATOR_OR => TRUE),
+            'facet missing allowed' => FALSE,
+            'facet mincount allowed' => FALSE,
+            //'map callback' => 'mymodulename_map_im_products_nid',
+            'max callback' => FALSE,
+            'default sorts' => array(
+                array('active', SORT_DESC),
+                array('count', SORT_DESC),
+                array('display', SORT_ASC),
+            ),
+        );
+        $facets['age'] = array(
+            'name' => 'age',
+            'label' => t('Age'),
+            'description' => t('The typical age.'),
+            'field' => 'age',
+            'dependency plugins' => array('role'), // ???
+            /* 'default widget' => 'links',
+            'allowed operators' => array(FACETAPI_OPERATOR_AND => TRUE, FACETAPI_OPERATOR_OR => TRUE),
+            'facet missing allowed' => FALSE,
+            'facet mincount allowed' => FALSE,
+            //'map callback' => 'mymodulename_map_im_products_nid',
+            'max callback' => FALSE, */
+            'query types' => array("range_filter"),
+            'default sorts' => array(
+                array('active', SORT_DESC),
+                array('count', SORT_DESC),
+                array('display', SORT_ASC),
+            ),
+        );
+    }
+    return $facets;
+}
 
 // ============================== THEME HOOKS =======================================
 
@@ -85,4 +155,7 @@ function printIfThere($text) {
         print(" • ");
     }
 }
+
+
+
 

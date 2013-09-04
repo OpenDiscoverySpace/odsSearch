@@ -89,8 +89,10 @@
       if($fields['author'] || $fields['updated'] || $fields['age']) {
           print(" • ");
           printIfThere($fields['author']);
-          printIfThere($fields['updated']);
-          printIfThere($fields['age']);
+          $updateS = $fields['updated'];
+          if($updateS) $update = format_date(strtotime($updateS), "custom","d/m/Y"); else $update = null;
+          printIfThere($update);
+          printIfThere($fields['ageRange']);
       }
 
 
