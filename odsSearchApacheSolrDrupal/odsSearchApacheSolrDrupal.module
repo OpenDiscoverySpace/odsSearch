@@ -37,7 +37,8 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
         drupal_debug("Query sort: ".$s); */
 
     // returned fields
-    $a = $query->getParams()['fl'];
+    $b= $query->getParams();
+    $a = $b['fl'];
     $a[]="updated";
     $a[]="author";
     $a[]="source";
