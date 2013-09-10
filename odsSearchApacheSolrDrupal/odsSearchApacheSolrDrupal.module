@@ -52,12 +52,17 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     dd("---------- /query3 --------------");
 }
 
+
 /** This hook to hook_apachesolr_index_document_build adds text-fields needed to be indexed.  */
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
+    $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga');
     //dd("building entity type: ".$entity_type);
     //dd("From entity: ".print_r($entity, true));
     //dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
     $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
+    foreach($indexerLanguages as $lang){
+        $document->addField("i18n_content_".$lang,  $entity->field_eo_description[$lang][0]['value']);
+    }
     $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
     // $document->addField("source",  $entity->field_data_provider);
     $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
@@ -68,6 +73,11 @@ function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDoc
             $ages=explode("-",$ageRange);
             if(strtolower($ages[0])=='u') $ages[0] = '0';
             if(strtolower($ages[1])=='u') $ages[1] = '25';
+            if(strval($ages[0])>strval($ages[1])) {
+                $x = $ages[0]; $ages[0] = $ages[1]; $ages[1] = $x;
+            }
+            if(strval($ages[0])<0) $ages[0]='0';
+            if(strval($ages[1])>25) $ages[1] = '25';
             $agesI = array(intval($ages[0]),intval($ages[1]));
             for($i=$agesI[0]; $i<$agesI[1]; $i++) {
                 $document->addField("age",  strval($i));
@@ -117,25 +127,26 @@ function odsSearchApacheSolrDrupal_facetapi_facet_info(array $searcher_info) {
                 array('display', SORT_ASC),
             ),
         );
+
         $facets['age'] = array(
             'name' => 'age',
             'label' => t('Age'),
             'description' => t('The typical age.'),
             'field' => 'age',
             'dependency plugins' => array('role'), // ???
-            /* 'default widget' => 'links',
+            'default widget' => 'links',
             'allowed operators' => array(FACETAPI_OPERATOR_AND => TRUE, FACETAPI_OPERATOR_OR => TRUE),
             'facet missing allowed' => FALSE,
             'facet mincount allowed' => FALSE,
             //'map callback' => 'mymodulename_map_im_products_nid',
-            'max callback' => FALSE, */
-            'query types' => array("range_filter"),
+            'max callback' => FALSE,
             'default sorts' => array(
                 array('active', SORT_DESC),
                 array('count', SORT_DESC),
                 array('display', SORT_ASC),
             ),
         );
+
     }
     return $facets;
 }

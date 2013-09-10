@@ -803,8 +803,9 @@
        <str name="facet">on</str>
        <str name="facet.field">ss_language</str>
        <str name="facet.field">bundle</str>
+       <str name="facet.field">age</str>
        <str name="facet.mincount">1</str>
-       <str name="facet.pivot">ss_language,type</str>
+       <str name="facet.pivot">ss_language,type,age</str>
        <!-- <str name="facet.range.other">after</str>
        <str name="facet.range">price</str>
        <int name="f.price.facet.range.start">0</int>
@@ -822,7 +823,8 @@
        <str name="f.ds_changed.facet.range.other">after</str>
 
 
-       <!-- Highlighting defaults -->
+
+         <!-- Highlighting defaults -->
        <str name="hl">on</str>
        <str name="hl.fl">label content path</str>
        <str name="f.name.hl.fragsize">0</str>
