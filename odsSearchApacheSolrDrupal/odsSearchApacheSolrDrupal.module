@@ -46,6 +46,8 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     $a[]="age"; // ??
     $a[]="copyright";
 
+    $query->setAvailableSort("age",array("title"=>"age", "default"=>"desc"));
+
     $query->addParam('fl', $a);
 
 
@@ -55,42 +57,58 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
 
 /** This hook to hook_apachesolr_index_document_build adds text-fields needed to be indexed.  */
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
-    $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga');
-    //dd("building entity type: ".$entity_type);
-    //dd("From entity: ".print_r($entity, true));
-    //dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
-    $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
-    foreach($indexerLanguages as $lang){
-        $document->addField("i18n_content_".$lang,  $entity->field_eo_description[$lang][0]['value']);
-    }
-    $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
-    // $document->addField("source",  $entity->field_data_provider);
-    $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
-    $ageRange = $entity->field_educational_typicalagerang['und'][0]['value'];
-    if($ageRange) {
-        $document->addField("ageRange",  $ageRange);
-        try {
-            $ages=explode("-",$ageRange);
-            if(strtolower($ages[0])=='u') $ages[0] = '0';
-            if(strtolower($ages[1])=='u') $ages[1] = '25';
-            if(strval($ages[0])>strval($ages[1])) {
-                $x = $ages[0]; $ages[0] = $ages[1]; $ages[1] = $x;
+    try {
+        $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga');
+        //dd("building entity type: ".$entity_type);
+        //dd("From entity: ".print_r($entity, true));
+        //dd("Identifier: ".(print_r($entity->field_lo_identifier['und'][0]['value'],true)));
+        $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
+        foreach($indexerLanguages as $lang){
+            $document->addField("i18n_content_".$lang,  $entity->field_eo_description[$lang][0]['value']);
+        }
+        $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
+        // $document->addField("source",  $entity->field_data_provider);
+        $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
+    $l = sizeof($entity->field_educational_typicalagerang['und']);
+    for($i=0; $i<$l; $i++) {
+        $ageRange = $entity->field_educational_typicalagerang['und'][$i]['value'];
+        if($ageRange) {
+            $document->addField("ageRange",  $ageRange);
+            try {
+                $ages=explode("-",$ageRange);
+                if(strtolower($ages[0])=='u') $ages[0] = '0';
+                if(strtolower($ages[1])=='u') $ages[1] = '25';
+                if(strval($ages[0])>strval($ages[1])) {
+                    $x = $ages[0]; $ages[0] = $ages[1]; $ages[1] = $x;
+                }
+                if(strval($ages[0])<0) $ages[0]='0';
+                if(strval($ages[1])>25) $ages[1] = '25';
+                $agesI = array(intval($ages[0]),intval($ages[1]));
+                for($i=$agesI[0]; $i<$agesI[1]; $i++) {
+                    $document->addField("age",  strval($i));
+                    //dd("age: ".$i);
+                }
+            } catch(Exception $x) {
+                dd("Warning: ".$x);
             }
-            if(strval($ages[0])<0) $ages[0]='0';
-            if(strval($ages[1])>25) $ages[1] = '25';
-            $agesI = array(intval($ages[0]),intval($ages[1]));
-            for($i=$agesI[0]; $i<$agesI[1]; $i++) {
-                $document->addField("age",  strval($i));
-                //dd("age: ".$i);
-            }
-        } catch(Exception $x) {
-            dd("Warning: ".$x);
         }
     }
 
+    // teaser should only be made of the description
+    $document->teaser = $entity->field_eo_description['und'][0]['value'];
+    // in all languages
+    foreach($indexerLanguages as $lang) {
+        $document->addField("i18n_teaser_".$lang , $entity->field_eo_description[$lang][0]['value']);
+    }
+
+    } catch(Exception $x) {
+        dd("Exception at indexing " .$x);
+    }
+
+
 
     //dd("Into: ".implode(' ',get_object_vars($document)));
-}
+ }
 
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build_educational_object(ApacheSolrDocument $document, $entity, $env_id) {
     // is not called!
@@ -171,3 +189,6 @@ function printIfThere($text) {
 
 
 
+// css adjustments
+
+drupal_add_css( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/odsSearchApacheSolrDrupal.css');

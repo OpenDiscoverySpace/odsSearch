@@ -1,0 +1,12 @@
+
+.block-facetapi div div ul {
+    padding-left: 1em;
+    line-height: 140%;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
