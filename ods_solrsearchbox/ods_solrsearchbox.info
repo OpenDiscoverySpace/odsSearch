@@ -1,0 +1,5 @@
+name = ODS Search Box for Solr integraion
+description = A input box with submit button for Solr integration
+core = 7.x
+package = ODS
+

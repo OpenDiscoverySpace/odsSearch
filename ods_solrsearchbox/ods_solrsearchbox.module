@@ -1,0 +1,54 @@
+<?php
+
+function ods_solrsearchbox_block_info() {
+	$blocks['ods_solrsearchbox_block_0'] = array(
+		'info' => t('ODS Solr Serch Box'), //The name that will appear in the block list.
+		'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+	);
+	return $blocks;
+}
+
+/**
+* Implements hook_block_view().
+*
+* Prepares the contents of the block.
+*/
+
+function ods_solrsearchbox_block_view($delta = '') {
+	switch($delta){
+	case 'ods_solrsearchbox_block_0':
+		$block['subject'] = t('ODS Solr Search Box');
+		$block['content'] = drupal_get_form('ods_solrsearchbox_form');
+	}
+	return $block;
+}
+
+function ods_solrsearchbox_form($form_state) {
+
+	$value = '';
+	if( arg(0) == 'search' && arg(1) == 'site' ) {
+		$value = arg(2);
+	}
+	if( strpos($value, '?') ) {
+		$value = substr($value, 0, strpos($value, '?') );
+	}
+
+	$form['solr-search-text'] = array(
+		'#type' => 'textfield',
+		'#id' => 'solr-search-textfield',
+		//'#default_value' => isset( $form_state['values']['solr-search-text'] ) ? $form_state['values']['solr-search-text'] : NULL,
+		'#default_value' => $value,
+	);
+
+	$form['solr-search-submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Search'),
+	);
+
+	return $form;
+}
+
+function ods_solrsearchbox_form_submit($form, &$form_state) {
+	dpm($form_state);
+	drupal_goto('search/site/'.$form_state['values']['solr-search-text']);
+}
