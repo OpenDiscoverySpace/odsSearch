@@ -30,6 +30,8 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     // how to sort?
     $query->setAvailableSort("author", array("author asc"));
     $query->setSolrsort("author", "asc");
+    $query->setAvailableSort("age", array("age asc"));
+    $query->setSolrsort("age", "asc");
     // or add Param (ugly!)
     //$query->addParam("sort", "updated desc");
 
