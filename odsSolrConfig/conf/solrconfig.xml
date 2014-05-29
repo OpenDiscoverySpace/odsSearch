@@ -842,7 +842,10 @@
     apachesolr maintainers. The decision was taken during the Drupalcon Munich codesprint.
     -->
   <requestHandler name="pinkPony" class="solr.SearchHandler" default="true">
-    <lst name="defaults">
+      <arr name="first-components">
+          <str>odsQueryExpansion</str>
+      </arr>
+      <lst name="defaults">
       <str name="defType">edismax</str>
       <str name="echoParams">explicit</str>
       <bool name="omitHeader">true</bool>
@@ -863,6 +866,8 @@
       <str>spellcheck</str>
     </arr>
   </requestHandler>
+    <searchComponent name="odsQueryExpansion"
+                     class="eu.opendiscoveryspace.search.solrcomp.QueryExpansion" />
 
   <!-- The more like this handler offers many advantages over the standard handler,
      when performing moreLikeThis requests.-->
