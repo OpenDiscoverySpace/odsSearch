@@ -19,18 +19,18 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     global $user, $language;
     dd("---------- query3 ---------------");
     dd("Query    : ".print_r($query,true));
-    foreach($query->getSolrsort() as $s)
-        dd("Query sort: ".$s);
-    $query->setSolrsort("Title","desc");
-    foreach($query->getAvailableSorts() as $a) {
+    /* foreach($query->getSolrsort() as $s)
+        dd("Query sort: ".$s); */
+    //$query->setSolrsort("Title","desc");
+    /* foreach($query->getAvailableSorts() as $a) {
         dd(" available sort: ".implode(' ', $a));
-    }
+    }*/
 
     // how to add a facet query?
     // $query->addFilter("age","18-U");
     // how to sort?
-    $query->setAvailableSort("author", array("author asc"));
-    $query->setSolrsort("author", "asc");
+    //$query->setAvailableSort("author", array("author asc"));
+    //$query->setSolrsort("author", "asc");
     //$query->setAvailableSort("age", array("age asc"));
     //$query->setSolrsort("age", "asc");
     // or add Param (ugly!)
@@ -52,10 +52,35 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterfa
     //$query->setAvailableSort("age",array("title"=>"age", "default"=>"desc"));
     $query->addParam('odsUserLang', $user->language);
     $query->addParam('odsLang', $language->language);
-    dd('odsLang'.$language->language);
-    dd('odsUserLang'.$user->language);
     $query->addParam('fl', $a);
 
+    $dbquery = db_select('profile', 'n');
+    $dbquery->condition('n.uid', $user->uid, '=')
+        ->fields('n', array('pid'))
+        ->range(0, 50);
+    $results = $dbquery->execute();
+    if(!empty($results)) {
+        $pid = null;
+        foreach($results as $result) {
+            $pid = $result->pid;
+        }
+        if($pid!=null) {
+            $comp = retrieve_competence_data($pid);
+            dd("Has a competency profile.");
+            foreach($comp as $key=>$value) {
+                $query->addParam("c_".substr($key, 6), $value);
+            }
+        }
+        /* dd("Obtained pid: ");
+        dd($pid);
+        $p = $pid->fetchAssoc()->pid;
+        dd("trying to get first: " . $p);
+        $comp = retrieve_competence_data($p);
+        dd("competency profile");
+        dd($comp); */
+    } else {
+        dd("No competency profile.");
+    }
 
     dd("---------- /query3 --------------");
 }
