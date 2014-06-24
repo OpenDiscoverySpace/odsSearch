@@ -7,6 +7,7 @@
     <artifactId>ods-search-solrcomp</artifactId>
     <version>0.1-SNAPSHOT</version>
     <name>ODSSearch SOLR Component</name>
+    <packaging>jar</packaging>
     <description>The component of ODS Search living inside the SOLR server.</description>
 
     <properties>
@@ -29,6 +30,7 @@
           <version>1.1.1</version><scope>provided</scope></dependency>
         <dependency><groupId>org.apache.geronimo.specs</groupId><artifactId>geronimo-jsp_2.1_spec</artifactId>
           <version>1.0.1</version><scope>provided</scope></dependency>
+        <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.1</version></dependency>
     </dependencies>
 
 

@@ -842,9 +842,16 @@
     apachesolr maintainers. The decision was taken during the Drupalcon Munich codesprint.
     -->
   <requestHandler name="pinkPony" class="solr.SearchHandler" default="true">
-      <arr name="first-components">
+      <arr name="components">
           <str>odsQueryExpansion</str>
+          <str>facet</str>
+          <!--  <str>mlt</str>-->
+          <str>highlight</str>
+          <str>stats</str>
+          <str>debug</str>
+          <!-- <str>spellcheck_bg</str><str>spellcheck_da</str><str>spellcheck_de</str><str>spellcheck_en</str><str>spellcheck_es</str><str>spellcheck_et</str><str>spellcheck_fi</str><str>spellcheck_fr</str><str>spellcheck_hr</str><str>spellcheck_it</str><str>spellcheck_lt</str><str>spellcheck_lv</str><str>spellcheck_nl</str><str>spellcheck_pt-pt</str><str>spellcheck_sr</str><str>spellcheck</str> -->
       </arr>
+
       <lst name="defaults">
       <str name="defType">edismax</str>
       <str name="echoParams">explicit</str>
@@ -862,9 +869,9 @@
       <!--  The number of suggestions to return -->
       <str name="spellcheck.count">1</str>
     </lst>
-    <arr name="last-components">
+    <!-- <arr name="last-components">
       <str>spellcheck</str>
-    </arr>
+    </arr> -->
   </requestHandler>
     <searchComponent name="odsQueryExpansion"
                      class="eu.opendiscoveryspace.search.solrcomp.QueryExpansion" />
