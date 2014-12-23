@@ -1047,6 +1047,7 @@
             The format used is $document->id = $site_hash . '/' . $entity_type . '/' . $entity->id;
         -->
         <field name="id" type="string" indexed="true" stored="true" required="true" />
+        <field name="_version_" type="long" indexed="true" stored="true"/>
 
         <!-- Search Api specific fields -->
         <!-- item_id contains the entity ID, e.g. a node's nid. -->
@@ -1388,7 +1389,7 @@ We use long for integer since 64 bit ints are now common in PHP. -->
         <!-- ================================================= -->
         <!-- updated: single: because Drupal creates the other multivalued; single allows sorting -->
         <field name="updated" indexed="true" multiValued="false" type="tdate"/>
-        <copyField source="dm_field_update_date" dest="updated" />
+        <copyField source="dm_field_eo_update_date" dest="updated" />
 
         <!-- loid: identifier of the learning object == unfortunately the field id is already taken -->
         <field name="loid" indexed="true" stored="true" multiValued="false" type="string"/>
@@ -1396,8 +1397,17 @@ We use long for integer since 64 bit ints are now common in PHP. -->
         <!-- author: full name of the author (ODS internal or not) that last edited that resource -->
         <field name="author" indexed="true" stored="true" multiValued="false" type="string"/>
 
-        <!-- source: identifier of the repository that provided the resource to ODS -->
+        <!-- granularity: aggregation level of the educational resource  -->
+        <field name="granularity" indexed="true" stored="true" multiValued="false" type="string"/>
+
+        <!-- source: repository that provided the resource to ODS -->
         <field name="source" indexed="true" stored="true" multiValued="false" type="string"/>
+
+	<!-- location: technical loation of the resource -->
+        <field name="location" indexed="true" stored="true" multiValued="false" type="string"/>
+
+        <!-- Most comments field -->
+        <field name="comment_count" indexed="true" stored="true" multiValued="false" type="long"/>
 
         <!-- age: age value -->
         <field name="age" indexed="true" stored="true" multiValued="true" type="tint"/>
