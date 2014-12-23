@@ -2,28 +2,60 @@
 
 function ods_solrsearchbox_block_info() {
 	$blocks['ods_solrsearchbox_block_0'] = array(
-		'info' => t('ODS Solr Serch Box'), //The name that will appear in the block list.
-		'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+		'info' => t('ODS Solr Search Box'), //The name that will appear in the block list.
+		'cache' => DRUPAL_NO_CACHE, //Default
 	);
 	return $blocks;
 }
 
-/**
-* Implements hook_block_view().
-*
-* Prepares the contents of the block.
-*/
+/*
+ * Implements hook_block_view().
+ *
+ * Prepares the contents of the block.
+ */
 
 function ods_solrsearchbox_block_view($delta = '') {
 	switch($delta){
 	case 'ods_solrsearchbox_block_0':
-		$block['subject'] = t('ODS Solr Search Box');
+		//$block['subject'] = t('ODS Solr Search Box');
 		$block['content'] = drupal_get_form('ods_solrsearchbox_form');
+        break;
+	case 'ods_solrsearchbox_block_1':
+		$block['subject'] = t('EntrEDU Solr Search Box');
+		$block['content'] = drupal_get_form('entredu_solrsearchbox_form');
+        break;
 	}
 	return $block;
 }
 
 function ods_solrsearchbox_form($form_state) {
+
+	$value = '';
+	if( arg(0) == 'search' && arg(1) == 'site' ) {
+		$value = arg(2);
+	}
+
+	$form['solr-search-text'] = array(
+		'#type' => 'textfield',
+		'#id' => 'solr-search-textfield',
+		'#default_value' => $value,
+		'#attributes'=>array('placeholder'=>t('Search for educational resources...'),),
+	);
+
+	$form['solr-search-submit'] = array(
+		'#type' => 'submit',
+		//'#value' => t('Search'),
+		'#id' => 'solr-search-button',
+	);
+
+	return $form;
+}
+
+function ods_solrsearchbox_form_submit($form, &$form_state) {
+	drupal_goto('search/site/'.$form_state['values']['solr-search-text']);
+}
+
+function entredu_solrsearchbox_form($form_state) {
 
 	$value = '';
 	if( arg(0) == 'search' && arg(1) == 'site' ) {
@@ -36,19 +68,19 @@ function ods_solrsearchbox_form($form_state) {
 	$form['solr-search-text'] = array(
 		'#type' => 'textfield',
 		'#id' => 'solr-search-textfield',
-		//'#default_value' => isset( $form_state['values']['solr-search-text'] ) ? $form_state['values']['solr-search-text'] : NULL,
 		'#default_value' => $value,
+                '#attributes'=>array('placeholder'=>t('Search EntrEDU educational resources...'),),
 	);
 
 	$form['solr-search-submit'] = array(
 		'#type' => 'submit',
-		'#value' => t('Search'),
+		//'#value' => t('Search'),
+		'#id' => 'solr-search-button',
 	);
 
 	return $form;
 }
 
-function ods_solrsearchbox_form_submit($form, &$form_state) {
-	dpm($form_state);
+function entredu_solrsearchbox_form_submit($form, &$form_state) {
 	drupal_goto('search/site/'.$form_state['values']['solr-search-text']);
 }
