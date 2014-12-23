@@ -1,16 +1,57 @@
 
 .block-facetapi div div ul {
-    padding-left: 1em;
     line-height: 140%;
-
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
 }
 
-
-
-.search-snippet {
-    max-height: 4em;
-    overflow:hidden;
+.block-facetapi a {
+    text-decoration:none;
 }
+
+.block-facetapi li {
+    list-style:none;
+}
+
+.block-facetapi .item-list ul {
+	margin-left: -30px;
+}
+
+.block-apachesolr-search .item-list a {
+    text-decoration:none;
+}
+
+.block-apachesolr-search .item-list li {
+    list-style:none;
+}
+
+.block-apachesolr-search .item-list ul {
+	margin-left: -30px;
+}
+
+#solr-search-textfield {
+		float:left;
+		height: 35px;
+		width: 90%;
+		border:  1px solid;
+		border-radius: 5px;
+		border-color: #A4A4A4;
+		font-size: 14px;
+		padding-left: 10px;
+		margin: 0px 0px 5px 0px;
+		color: @blue-menu;
+}
+
+#solr-search-button {
+		float:right;
+		border: none;
+		background-image: url("../../themes/ods_02/images/main-menu/magn-glass-blue.png");
+		background-repeat: no-repeat;
+		background-position: center;
+		height: 35px;
+		width: 8%;
+		margin: 0px 5px 5px 0px;
+}
+
+
+
