@@ -67,35 +67,54 @@
 <li class="<?php print $classes; ?>"<?php print $attributes; ?>>
   <?php print render($title_prefix); ?>
   <h3 class="title"<?php print $title_attributes; ?>>
-    <a href="<?php print $url; ?>"><?php print $title; ?></a>
+    <a href="<?php print $url; ?>" style="text-decoration:none" title="Go to the summary page">
+      <?php print $title; ?>
+    </a>
   </h3>
   <?php print render($title_suffix); ?>
+  <?php $fields = $result['fields']; ?>
   <div class="search-snippet-info">
-    <?php if ($snippet): ?>
-      <p class="search-snippet"<?php print $content_attributes; ?>><?php print $snippet; ?></p>
-    <?php endif; ?>
-    <!-- <?php if ($info): ?>
-      <p class="search-info"><?php print $info; ?>
-        </p>
-    <?php endif; ?> -->
-      <?php
-      dd("result: ".print_r($result,true));
-      dd("snippet: ".print_r($snippet,true));
-      dd("attributes: ".print_r($attributes,true));
-      ?>
-      <p><?php
-
-      $fields = $result['fields'];
-      if($fields['author'] || $fields['updated'] || $fields['age']) {
-          print(" • ");
-          printIfThere($fields['author']);
-          $updateS = $fields['updated'];
-          if($updateS) $update = format_date(strtotime($updateS), "custom","d/m/Y"); else $update = null;
-          printIfThere($update);
-          printIfThere($fields['ageRange']);
-      }
-
-
-          ?></p>
-  </div>
+    <table>
+	<tr>
+	  <?php 
+		function url_exists ($url) {
+		  $ch = @curl_init($url);
+		  @curl_setopt($ch, CURLOPT_HEADER, TRUE);
+		  @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+		  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
+		  @curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		  $status = array();
+		  preg_match('/HTTP\/.* ([0-9]+) .*/', @curl_exec($ch) , $status);
+		  return ($status[1] == 200);
+		}
+	  ?>
+	  <?php if ($fields['source']){ ?>
+	    <td rowspan=2 valign="middle" width="20%">
+	      <div style = "width:100px; overflow:hidden;">
+		<?php global $base_url; $logo = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
+		<?php if (url_exists($logo)) { ?>
+			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/'.$fields['source'].'.png';?>" />
+		<?php } else { ?>
+			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/imageNotAvailable.png';?>" />
+		<?php } ?>
+	      </div>
+	    </td>
+          <?php } else { ?>
+	    <td rowspan=2 width="20%"></td>
+	  <?php } ?>
+            <td width="80%">
+    	      <?php if ($snippet): ?>
+      	        <p class="search-snippet"<?php print $content_attributes; ?>><?php print $snippet; ?></p>
+ 	      <?php endif; ?>
+            </td>
+	</tr>
+	<tr>
+	  <td width="80%">
+    	    <?php if ($fields['source']): ?>
+      	      <div class="search-info" style="font-size:12px"><b><?php print t("Source: "); ?></b><?php print $fields['source']; ?></div>
+    	    <?php endif; ?>
+	  </td>
+        </tr>
+    </table>
+   </div>
 </li>
