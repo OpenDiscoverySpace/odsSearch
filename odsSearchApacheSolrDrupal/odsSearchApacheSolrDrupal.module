@@ -1,93 +1,64 @@
 <?php
 
-function odsSearchApacheSolrDrupal_apachesolr_search_result_alter(stdClass $document, array &$extra, DrupalSolrQueryInterface $query) {
-    // ApacheSolrDocument $document
+/**
+* This hook prepares the query by adding parameters, sorts, etc.
+* We use the hook to add and remove filters in order to sort the search results.
+* @param object $query: An object implementing DrupalSolrQueryInterface. No need for &.
+*/
+function odsSearchApacheSolrDrupal_apachesolr_query_prepare($query){
 
-    /* drupal_debug("Document : ".print_r($document,true));
+    //Update the "Sort by" block.
+    //We add the Most comments sorting option (we must add this field to the schema.xml file).
+    $query->setAvailableSort('comment_count', array('title' => t("Most comments"), 'default' => 'desc'));
+    //Update date.
+    //This field is defined in the schema.xml file.
+    $query->setAvailableSort('updated', array('title' => t("Date"), 'default' => 'desc'));
+	//Author fullname: the responsible of the resource.
+    //This field is defined in the schema.xml file.
+	$query->setAvailableSort('author', array('title' => t("Contributor"), 'default' => 'asc'));
+    //Repository.
+    //This field is defined in the schema.xml file.
+	$query->setAvailableSort('source', array('title' => t("Repository"), 'default' => 'asc'));
+    //Aggregation level.
+    //This field is defined in the schema.xml file.
+	$query->setAvailableSort('granularity', array('title' => t("Granularity"), 'default' => 'asc'));
+    //Type: Node, page...
+	$query->removeAvailableSort('bundle');
+	//Author: creator of the node.
+	$query->removeAvailableSort('sort_name');
+    //Time the node was published.
+    $query->removeAvailableSort('ds_created');
 
-    foreach($extra as $e) {
-        drupal_debug("Extra: ".print_r($e,true));
-    } */
-    //drupal_debug("Query    : ".print_r($query,true));
-
-    // that fails, types must be different
-    //$document->ds_changed = $document->updated;
 }
 
-
-function odsSearchApacheSolrDrupal_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
-    global $user, $language;
-    dd("---------- query3 ---------------");
-    dd("Query    : ".print_r($query,true));
-    /* foreach($query->getSolrsort() as $s)
-        dd("Query sort: ".$s); */
-    //$query->setSolrsort("Title","desc");
-    /* foreach($query->getAvailableSorts() as $a) {
-        dd(" available sort: ".implode(' ', $a));
-    }*/
-
-    // how to add a facet query?
-    // $query->addFilter("age","18-U");
-    // how to sort?
-    //$query->setAvailableSort("author", array("author asc"));
-    //$query->setSolrsort("author", "asc");
-    //$query->setAvailableSort("age", array("age asc"));
-    //$query->setSolrsort("age", "asc");
-    // or add Param (ugly!)
-    //$query->addParam("sort", "updated desc");
-
-    /* foreach($query->getSolrsort() as $s)
-        drupal_debug("Query sort: ".$s); */
-
+/**
+* This hook alters the query after it's prepared and cached. 
+* Any module performing a search should call drupal_alter('apachesolr_query', $query). 
+* That function then invokes this hook. It allows modules to modify the query object and its parameters.
+* We use this hook to include the params that we need in order to show them in the search results page or  
+* for the sorting functionality.
+* @param object $query: An object implementing DrupalSolrQueryInterface. No need for &.
+*/
+function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
     // returned fields
     $b= $query->getParams();
     $a = $b['fl'];
     $a[]="updated";
     $a[]="author";
     $a[]="source";
+    $a[]="granularity";
+    $a[]="location";
     $a[]="ageRange";
     $a[]="age"; // ??
-    $a[]="copyright";
 
-    //$query->setAvailableSort("age",array("title"=>"age", "default"=>"desc"));
-    $query->addParam('odsUserLang', $user->language);
-    $query->addParam('odsLang', $language->language);
     $query->addParam('fl', $a);
 
-    $dbquery = db_select('profile', 'n');
-    $dbquery->condition('n.uid', $user->uid, '=')
-        ->fields('n', array('pid'))
-        ->range(0, 50);
-    $results = $dbquery->execute();
-    if(!empty($results)) {
-        $pid = null;
-        foreach($results as $result) {
-            $pid = $result->pid;
-        }
-        if($pid!=null) {
-            $comp = retrieve_competence_data($pid);
-            dd("Has a competency profile.");
-            foreach($comp as $key=>$value) {
-                $query->addParam("c_".substr($key, 6), $value);
-            }
-        }
-        /* dd("Obtained pid: ");
-        dd($pid);
-        $p = $pid->fetchAssoc()->pid;
-        dd("trying to get first: " . $p);
-        $comp = retrieve_competence_data($p);
-        dd("competency profile");
-        dd($comp); */
-    } else {
-        dd("No competency profile.");
-    }
-
-    dd("---------- /query3 --------------");
 }
 
-// function apachesolr_multilingual_get_language_filters_by_query
-
-/** This hook to hook_apachesolr_index_document_build adds text-fields needed to be indexed.  */
+/**
+* This hook builds the documents before sending them to Solr. The function is the follow-up for apachesolr_update_index.
+* We use this hook to adda text-fields needed to be indexed.
+*/
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
     try {
         $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga');
@@ -98,57 +69,63 @@ function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDoc
         foreach($indexerLanguages as $lang){
             $document->addField("i18n_content_".$lang,  $entity->field_eo_description[$lang][0]['value']);
         }
+
+        //Author fullname.
         $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
-        // $document->addField("source",  $entity->field_data_provider);
-        $document->addField("copyright",  $entity->field_copyright['und'][0]['value']);
-    $l = sizeof($entity->field_educational_typicalagerang['und']);
-    for($i=0; $i<$l; $i++) {
-        $ageRange = $entity->field_educational_typicalagerang['und'][$i]['value'];
-        if($ageRange) {
-            $document->addField("ageRange",  $ageRange);
-            try {
-                $ages=explode("-",$ageRange);
-                if(strtolower($ages[0])=='u') $ages[0] = '0';
-                if(strtolower($ages[1])=='u') $ages[1] = '25';
-                if(strval($ages[0])>strval($ages[1])) {
-                    $x = $ages[0]; $ages[0] = $ages[1]; $ages[1] = $x;
+
+        //Data provider (repository name)
+        //Get taxonomy term name from tid
+        $dataProvider_tid = $entity->field_data_provider['und'][0]['tid'];
+        $term = taxonomy_term_load($dataProvider_tid);
+        $name = $term->name;
+        $document->addField("source",  $name);
+	
+        //Granularity
+        //Get taxonomy term name from tid
+        $granularity_tid = $entity->field_aggregation_level['und'][0]['tid'];
+        $term = taxonomy_term_load($granularity_tid);
+        $name = $term->name;
+        $document->addField("granularity",  $name);
+
+	   //Get the technical location of the resource
+	   $document->addField("location", $entity->field_resource_link['und'][0]['url']);
+
+        $l = sizeof($entity->field_educational_typicalagerang['und']);
+        for($i=0; $i<$l; $i++) {
+            $ageRange = $entity->field_educational_typicalagerang['und'][$i]['value'];
+            if($ageRange) {
+                $document->addField("ageRange",  $ageRange);
+                try {
+                    $ages=explode("-",$ageRange);
+                    if(strtolower($ages[0])=='u') $ages[0] = '0';
+                    if(strtolower($ages[1])=='u') $ages[1] = '20';
+                    if(strval($ages[0])>strval($ages[1])) {
+                        $x = $ages[0]; $ages[0] = $ages[1]; $ages[1] = $x;
+                    }
+                    if(strval($ages[0])<0) $ages[0]='0';
+                    if(strval($ages[1])>20) $ages[1] = '20';
+                    $agesI = array(intval($ages[0]),intval($ages[1]));
+                    for($i=$agesI[0]; $i<$agesI[1]; $i++) {
+                        $document->addField("age",  strval($i));
+                        //dd("age: ".$i);
+                    }
+                } catch(Exception $x) {
+                    dd("Warning: ".$x);
                 }
-                if(strval($ages[0])<0) $ages[0]='0';
-                if(strval($ages[1])>25) $ages[1] = '25';
-                $agesI = array(intval($ages[0]),intval($ages[1]));
-                for($i=$agesI[0]; $i<$agesI[1]; $i++) {
-                    $document->addField("age",  strval($i));
-                    //dd("age: ".$i);
-                }
-            } catch(Exception $x) {
-                dd("Warning: ".$x);
             }
         }
-    }
-
-    // teaser should only be made of the description
-    $document->teaser = $entity->field_eo_description['und'][0]['value'];
-    // in all languages
-    foreach($indexerLanguages as $lang) {
-        $document->addField("i18n_teaser_".$lang , $entity->field_eo_description[$lang][0]['value']);
-    }
-
+        // teaser should only be made of the description
+        $document->teaser = $entity->field_eo_description['und'][0]['value'];
+        // in all languages
+        foreach($indexerLanguages as $lang) {
+            $document->addField("i18n_teaser_".$lang , $entity->field_eo_description[$lang][0]['value']);
+        }
     } catch(Exception $x) {
         dd("Exception at indexing " .$x);
     }
-
-
-
-    //dd("Into: ".implode(' ',get_object_vars($document)));
  }
 
-function odsSearchApacheSolrDrupal_apachesolr_index_document_build_educational_object(ApacheSolrDocument $document, $entity, $env_id) {
-    // is not called!
-    dd("Please mail paul@cermat.org if you see me in the log. A wonder has happened.");
-}
-
 // FACET HOOKS
-
 /**
  * Implements hook_facetapi_facet_info.
  * @param array $searcher_info
@@ -161,8 +138,8 @@ function odsSearchApacheSolrDrupal_facetapi_facet_info(array $searcher_info) {
     if (isset($searcher_info['types']['node'])) {
         $facets['author'] = array(
             'name' => 'author',
-            'label' => t('Author'),
-            'description' => t('The author that created the resource.'),
+            'label' => t('Author Fullname'),
+            'description' => t('The author that created the resource (not the node).'),
             'field' => 'author',
             'dependency plugins' => array('role'), // ???
             'default widget' => 'links',
@@ -196,31 +173,11 @@ function odsSearchApacheSolrDrupal_facetapi_facet_info(array $searcher_info) {
                 array('display', SORT_ASC),
             ),
         );
-
     }
     return $facets;
 }
 
-// ============================== THEME HOOKS =======================================
-
-/* function odsSearchApacheSolrDrupal_theme($existing, $type, $theme, $path) {
-    return array(
-        odsSearchApacheSolrDrupal_hookname
-    )
-} */
-
-
-// ============================ THEME FUNCTIONS ============================================
-function printIfThere($text) {
-    if($text) {
-        print($text);
-        print(" • ");
-    }
-}
-
-
-
 
 // css adjustments
-
-drupal_add_css( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/odsSearchApacheSolrDrupal.css');
+drupal_add_css( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/odsSearchApacheSolrDrupal.css', array('every_page' =>FALSE));
+ 
