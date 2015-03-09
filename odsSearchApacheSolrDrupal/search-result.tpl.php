@@ -89,7 +89,7 @@
 		}
 	  ?>
 	  <?php if ($fields['source']){ ?>
-	    <td rowspan=2 valign="middle" width="20%">
+	    <td rowspan=2 valign="middle">
 	      <div style = "width:100px; overflow:hidden;">
 		<?php global $base_url; $logo = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
 		<?php if (url_exists($logo)) { ?>
@@ -100,16 +100,16 @@
 	      </div>
 	    </td>
           <?php } else { ?>
-	    <td rowspan=2 width="20%"></td>
+	    <td rowspan=2></td>
 	  <?php } ?>
-            <td width="80%">
-    	      <?php if ($snippet): ?>
-      	        <p class="search-snippet"<?php print $content_attributes; ?>><?php print $snippet; ?></p>
- 	      <?php endif; ?>
-            </td>
+        <td>
+          <?php if ($fields['eo_description']): ?>
+            <div class="search-info" style="font-size:12px;"><?php print $fields['eo_description']; ?></div>
+    	    <?php endif; ?>
+        </td>
 	</tr>
 	<tr>
-	  <td width="80%">
+	  <td>
     	    <?php if ($fields['source']): ?>
       	      <div class="search-info" style="font-size:12px"><b><?php print t("Source: "); ?></b><?php print $fields['source']; ?></div>
     	    <?php endif; ?>
