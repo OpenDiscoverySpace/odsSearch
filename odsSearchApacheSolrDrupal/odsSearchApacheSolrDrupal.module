@@ -48,6 +48,7 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
     $a[]="source";
     $a[]="granularity";
     $a[]="location";
+    $a[]="eo_description";
     $a[]="ageRange";
     $a[]="age"; // ??
 
@@ -89,6 +90,37 @@ function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDoc
 
 	   //Get the technical location of the resource
 	   $document->addField("location", $entity->field_resource_link['und'][0]['url']);
+
+        //Get the description of the resource.
+        //First, we check if we have a description with the same language of the portal.
+        global $language;
+        $site_language = $language->language;
+        $description = $entity->field_eo_description[$site_language][0]['value'];
+        if ($description != NULL) {
+            $document->addField("eo_description", $description);
+        } else {
+            //We don't have a title with the same language of the portal, then we check if
+            //we have a description with the same language of the node.
+            $node_language = $entity->language;
+            if ($node_language != NULL) {
+                $description = $entity->field_eo_description[$node_language][0]['value'];
+                if ($description != NULL){
+                    $document->addField("eo_description", $description);
+                } else {
+                    //We don't have description with the same language of the node, then we have
+                    //to check if we have a description in some language (we get the language of the field).
+                    $description_language = field_language('node', $entity, 'field_eo_description');
+                    $description = $entity->field_eo_description[$description_language][0]['value'];
+                    if ($description != NULL) {
+                        $document->addField("eo_description", $description);
+                    } else {                        
+                        //We don't have the description in any language. Therefore, we will display a message 
+                        //remarking this situation.
+                        $document->addField("eo_description", "There is no available description for this resource");
+                    }
+                }
+            }
+        }
 
         $l = sizeof($entity->field_educational_typicalagerang['und']);
         for($i=0; $i<$l; $i++) {
