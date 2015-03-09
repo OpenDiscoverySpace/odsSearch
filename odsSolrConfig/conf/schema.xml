@@ -1403,8 +1403,11 @@ We use long for integer since 64 bit ints are now common in PHP. -->
         <!-- source: repository that provided the resource to ODS -->
         <field name="source" indexed="true" stored="true" multiValued="false" type="string"/>
 
-	<!-- location: technical loation of the resource -->
+        <!-- location: technical loation of the resource -->
         <field name="location" indexed="true" stored="true" multiValued="false" type="string"/>
+
+        <!-- eo_description: description of the educational resource -->
+        <field name="eo_description" indexed="true" stored="true" multiValued="false" type="string"/>
 
         <!-- Most comments field -->
         <field name="comment_count" indexed="true" stored="true" multiValued="false" type="long"/>
@@ -1440,6 +1443,6 @@ We use long for integer since 64 bit ints are now common in PHP. -->
     <defaultSearchField>content</defaultSearchField>
 
     <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
-    <solrQueryParser defaultOperator="AND"/>
+    <solrQueryParser defaultOperator="OR"/>
 
 </schema>
