@@ -40,6 +40,7 @@ function odsSearchApacheSolrDrupal_apachesolr_query_prepare($query){
 * @param object $query: An object implementing DrupalSolrQueryInterface. No need for &.
 */
 function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
+    global $user, $language;
     // returned fields
     $b= $query->getParams();
     $a = $b['fl'];
@@ -51,6 +52,8 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
     $a[]="eo_description";
 
     $query->addParam('fl', $a);
+    $query->addParam('odsUserLang', $user->language);
+    $query->addParam('odsLang', $language->language);
 
 }
 
