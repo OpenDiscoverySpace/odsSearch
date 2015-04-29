@@ -76,23 +76,11 @@
   <div class="search-snippet-info">
     <table>
 	<tr>
-	  <?php 
-		function url_exists ($url) {
-		  $ch = @curl_init($url);
-		  @curl_setopt($ch, CURLOPT_HEADER, TRUE);
-		  @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
-		  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
-		  @curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-		  $status = array();
-		  preg_match('/HTTP\/.* ([0-9]+) .*/', @curl_exec($ch) , $status);
-		  return ($status[1] == 200);
-		}
-	  ?>
 	  <?php if ($fields['source']){ ?>
 	    <td rowspan=2 valign="middle">
 	      <div style = "width:100px; overflow:hidden;">
 		<?php global $base_url; $logo = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
-		<?php if (url_exists($logo)) { ?>
+		<?php if (odsSearchApacheSolrDrupal_url_exists($logo)) { ?>
 			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/'.$fields['source'].'.png';?>" />
 		<?php } else { ?>
 			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/imageNotAvailable.png';?>" />
