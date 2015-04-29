@@ -4,7 +4,7 @@
 * This function checks if the logo is correct and it can be used as a valid image for
 * an educational resource in the search results page (see search-result.tpl.php).
 */
-function odsSearchApacheSolrDrupal_url_exists($logo){
+function odsSearchApacheSolrDrupal_url_exists($url){
   $ch = @curl_init($url);
   @curl_setopt($ch, CURLOPT_HEADER, TRUE);
   @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
