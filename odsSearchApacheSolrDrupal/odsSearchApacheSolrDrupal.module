@@ -1,6 +1,21 @@
 <?php
 
 /**
+* This function checks if the logo is correct and it can be used as a valid image for
+* an educational resource in the search results page (see search-result.tpl.php).
+*/
+function odsSearchApacheSolrDrupal_url_exists($logo){
+  $ch = @curl_init($url);
+  @curl_setopt($ch, CURLOPT_HEADER, TRUE);
+  @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
+  @curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  $status = array();
+  preg_match('/HTTP\/.* ([0-9]+) .*/', @curl_exec($ch) , $status);
+  return ($status[1] == 200);
+}
+
+/**
 * This hook prepares the query by adding parameters, sorts, etc.
 * We use the hook to add and remove filters in order to sort the search results.
 * @param object $query: An object implementing DrupalSolrQueryInterface. No need for &.
