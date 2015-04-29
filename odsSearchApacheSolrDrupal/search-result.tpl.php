@@ -79,8 +79,8 @@
 	  <?php if ($fields['source']){ ?>
 	    <td rowspan=2 valign="middle">
 	      <div style = "width:100px; overflow:hidden;">
-		<?php global $base_url; $logo = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
-		<?php if (odsSearchApacheSolrDrupal_url_exists($logo)) { ?>
+		<?php global $base_url; $logo_url = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
+		<?php if (odsSearchApacheSolrDrupal_url_exists($logo_url)) { ?>
 			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/'.$fields['source'].'.png';?>" />
 		<?php } else { ?>
 			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/imageNotAvailable.png';?>" />
