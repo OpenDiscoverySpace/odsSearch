@@ -2,10 +2,7 @@ package eu.opendiscoveryspace.search.solrcomp;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -94,6 +91,21 @@ public class QueryExpansion extends QueryComponent implements SearchConstants {
             myparams.set(CommonParams.Q, "rawInput:(" + text + ")");
         else
             myparams.set(CommonParams.Q, "*:*"); */
+
+            // choose the appropriate fields to query to
+            String qf = params.get("qf");
+            String currentLang = params.get("odsLang", "en");
+            System.err.println("QF earlier: " + qf);
+            qf = "text_ws^2.0 "
+                    + "i18n_label_"+ currentLang + "^1.5 "
+                    + "i18n_content_" + currentLang + "^1.2 "
+                    + "i18n_taxonomy_names_" + currentLang + "^1.1 "
+                    + "i18n_tags_" + currentLang + "^1.1 ";
+            // repo? (path alias? site?) URL parts? keywords? tags? author names? year?  phonetic? i18n_teaser? (to obtain highlight)
+            System.err.println("QF now: " + qf);
+            myparams.add("qf", qf);
+
+
             super.prepare(rb);
             Query parsedQuery1 = rb.getQuery();
             System.err.println("Query parsed as : " + parsedQuery1);
@@ -106,19 +118,23 @@ public class QueryExpansion extends QueryComponent implements SearchConstants {
                 parsedQuery1.setBoost(5.0f);
                 bQuery.add(parsedQuery1, MUST);
             }
+            removeQueryInFields(bQuery,
+                    new HashSet<String> (Arrays.asList("content", "label", "taxonomy_names", "tos_name")));
 
 
 
             BooleanQuery favoringQuery = new BooleanQuery();
-            // add weighting queries for competencies
-            if(preferredLRTypes==null) init(new NamedList());
-            addCompetencyProfileFavoringQueries(params, favoringQuery, preferredMediaTypes, "sm_vid_ODS_AP_Technical_Format");
-            addCompetencyProfileFavoringQueries(params, favoringQuery, preferredLRTypes, "sm_vid_ODS_Educational_Resource_Type");
+            if(sort.startsWith("score")) {
+                // add weighting queries for competencies
+                if(preferredLRTypes==null) init(new NamedList());
+                // currently disabled
+                //addCompetencyProfileFavoringQueries(params, favoringQuery, preferredMediaTypes, "sm_vid_ODS_AP_Technical_Format");
+                //addCompetencyProfileFavoringQueries(params, favoringQuery, preferredLRTypes, "sm_vid_ODS_Educational_Resource_Type");
 
-            // add weighting queries for current and own language
-            addLanguageFavoringQueries(params, favoringQuery);
+                // add weighting queries for current and own language
+                addLanguageFavoringQueries(params, favoringQuery);
+            }
 
-            // TODO: choose the right fields (and analyze them!)
 
             if(favoringQuery.getClauses().length>0)
                 bQuery.add(favoringQuery, BooleanClause.Occur.SHOULD);
@@ -128,6 +144,40 @@ public class QueryExpansion extends QueryComponent implements SearchConstants {
             e.printStackTrace();
         }
 
+    }
+
+
+
+    private boolean removeQueryInFields(Query q, Set<String> fieldNames) {
+        if(q instanceof TermQuery) return removeQueryInFields(((TermQuery) q), fieldNames);
+        else if(q instanceof BooleanQuery) return removeQueryInFields(((BooleanQuery) q), fieldNames);
+        else if(q instanceof DisjunctionMaxQuery)return removeQueryInFields(((DisjunctionMaxQuery) q), fieldNames);
+        else return false;
+    }
+
+    private boolean removeQueryInFields(TermQuery tq, Set<String> fieldNames) {
+        if (fieldNames.contains(tq.getTerm().field())) return true;
+        return false;
+    }
+
+
+    private boolean removeQueryInFields(DisjunctionMaxQuery q, Set<String> fieldNames) {
+        Iterator<Query> qit = q.getDisjuncts().iterator();
+        while(qit.hasNext()) {
+            Query cq = qit.next();
+            boolean removed = removeQueryInFields(cq, fieldNames);
+            if(removed) qit.remove();
+        }
+        return q.getDisjuncts().isEmpty();
+    }
+    private boolean removeQueryInFields(BooleanQuery q, Set<String> fieldNames) {
+        Iterator<BooleanClause> qit = q.clauses().iterator();
+        while(qit.hasNext()) {
+            BooleanClause clause = qit.next();
+            boolean removed = removeQueryInFields(clause.getQuery(), fieldNames);
+            if(removed) qit.remove();;
+        }
+        return q.clauses().isEmpty();
     }
 
     private String emptyToNull(String in) {
