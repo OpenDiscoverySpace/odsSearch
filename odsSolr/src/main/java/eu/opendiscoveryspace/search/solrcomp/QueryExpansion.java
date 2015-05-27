@@ -119,7 +119,7 @@ public class QueryExpansion extends QueryComponent implements SearchConstants {
                 bQuery.add(parsedQuery1, MUST);
             }
             removeQueryInFields(bQuery,
-                    new HashSet<String> (Arrays.asList("content", "label", "taxonomy_names", "tos_name")));
+                    new HashSet<String> (Arrays.asList("content", "label", "taxonomy_names", "tos_name","ts_comments")));
 
 
 
