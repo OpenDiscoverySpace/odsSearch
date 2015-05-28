@@ -49,29 +49,30 @@ public class CatchPostFilter implements Filter {
 
     @Override
     public void doFilter(final ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        synchronized(this) {
         HttpServletRequest hreq = (HttpServletRequest) request;
         String path = hreq.getPathTranslated();
-        if(path==null) path = hreq.getServletPath();
-        if(path==null) path = "unknown";
-        String fileName = System.currentTimeMillis() + path.replaceAll("/","_").replaceAll("\\\\","_") ;
-        if(!"POST".equals(hreq.getMethod())) {
-            chain.doFilter(request,response);
+        if (path == null) path = hreq.getServletPath();
+        if (path == null) path = "unknown";
+        String fileName = System.currentTimeMillis() + path.replaceAll("/", "_").replaceAll("\\\\", "_");
+        if (!"POST".equals(hreq.getMethod())) {
+            chain.doFilter(request, response);
             return;
         }
 
 
         // guess an extension
         String contentType = hreq.getHeader("Content-Type");
-        if(contentType.contains(";")) contentType = contentType.substring(0,contentType.indexOf(";")).trim();
+        if (contentType.contains(";")) contentType = contentType.substring(0, contentType.indexOf(";")).trim();
         System.err.println("Content-Type:" + contentType);
-        if((contentType.endsWith("/xml") || contentType.endsWith("+xml")))
+        if ((contentType.endsWith("/xml") || contentType.endsWith("+xml")))
             fileName = fileName + ".xml";
-        else if((contentType.startsWith("text")))
+        else if ((contentType.startsWith("text")))
             fileName = fileName + ".txt";
 
         // read post body into buffer
         ByteArrayOutputStream bOut = buffer.get();
-        if(bOut==null) {
+        if (bOut == null) {
             bOut = new ByteArrayOutputStream();
             buffer.set(bOut);
         }
@@ -81,18 +82,18 @@ public class CatchPostFilter implements Filter {
 
         // save it to file
         File file = new File(directory, fileName);
-        if("application/x-www-form-urlencoded".equals(contentType)) {
+        if ("application/x-www-form-urlencoded".equals(contentType)) {
             fileName = fileName + ".properties";
-            Writer out = new OutputStreamWriter(new FileOutputStream(file),"utf-8");
+            Writer out = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
             String s = bOut.toString("utf-8");
             String[] s1 = s.split("&");
-            for(String p:s1) {
+            for (String p : s1) {
                 int i = p.indexOf('=');
-                if(i>-1) {
-                    out.write(p.substring(0,i));
-                    p = p.substring(i+1);
+                if (i > -1) {
+                    out.write(p.substring(0, i));
+                    p = p.substring(i + 1);
                 }
-                out.write(URLDecoder.decode(p,"utf-8"));
+                out.write(URLDecoder.decode(p, "utf-8"));
             }
         } else
             FileUtils.writeByteArrayToFile(file, bytes, false);
@@ -103,17 +104,18 @@ public class CatchPostFilter implements Filter {
         Collections.sort(files, new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
-                if(o1==null && o2==null) return 0;
-                if(o1==null) return 1; if(o2==null) return -1;
-                long d1 = ((File)o1).lastModified(), d2 = ((File)o2).lastModified();
-                if(d1<d2) return 1;
-                if(d1==d2) return 0;
+                if (o1 == null && o2 == null) return 0;
+                if (o1 == null) return 1;
+                if (o2 == null) return -1;
+                long d1 = ((File) o1).lastModified(), d2 = ((File) o2).lastModified();
+                if (d1 < d2) return 1;
+                if (d1 == d2) return 0;
                 return -1;
             }
         });
-        int numToDelete = Math.max(0,files.size()-maxFiles);
-        for(File f: files) {
-            if(numToDelete <= 0) break;
+        int numToDelete = Math.max(0, files.size() - maxFiles);
+        for (File f : files) {
+            if (numToDelete <= 0) break;
             f.delete();
             numToDelete--;
         }
@@ -178,6 +180,7 @@ public class CatchPostFilter implements Filter {
                 };
             }
         }, response);
+    }
     }
 
     @Override
