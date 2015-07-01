@@ -715,6 +715,13 @@
             <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
         </analyzer>
     </fieldType>
+        <!-- phonetic tokens -->
+        <fieldType name="phonetic_en" class="solr.TextField"><analyzer>
+                <tokenizer class="solr.StandardTokenizerFactory"/>
+                <filter class="solr.BeiderMorseFilterFactory" nameType="GENERIC" ruleType="APPROX" concat="true" languageSet="en"/>
+        </analyzer></fieldType>
+
+
         <fieldType name="text_en" class="solr.TextField" positionIncrementGap="100">
         <analyzer type="index">
             <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ISOLatin1Accent.txt"/>
@@ -1011,7 +1018,14 @@
         <filter class="solr.DictionaryCompoundWordTokenFilterFactory" dictionary="compoundwords_bg.txt" minWordSize="5" minSubwordSize="4" maxSubwordSize="15" onlyLongestMatch="true"/>
             <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
         </analyzer>
-    </fieldType>
+        </fieldType>
+        <!-- Open Discovery Space: background field to collect matches in case of language mismatches -->
+        <fieldType name="backgroundStandard" class="solr.TextField">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.WordDelimiterFilterFactory" protected="protwords_bg.txt" splitOnCaseChange="1" splitOnNumerics="1" stemEnglishPossessive="1" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="1"/>
+            <filter class="solr.LengthFilterFactory" min="3" max="20"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </fieldType>
 
 
 
@@ -1062,50 +1076,75 @@
         <field name="entity_id"  type="long" indexed="true" stored="true" />
         <!-- entity_type is 'node', 'file', 'user', or some other Drupal object type -->
         <field name="entity_type" type="string" indexed="true" stored="true" />
+
         <!-- bundle is a node type, or as appropriate for other entity types -->
         <field name="bundle" type="string" indexed="true" stored="true"/>
         <field name="bundle_name" type="string" indexed="true" stored="true"/>
         <field name="site" type="string" indexed="true" stored="true"/>
         <field name="hash" type="string" indexed="true" stored="true"/>
         <field name="url" type="string" indexed="true" stored="true"/>
+
         <!-- label is the default field for a human-readable string for this entity (e.g. the title of a node) -->
-        <field name="label" type="text" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_sr" type="text_sr" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_pt-pt" type="text_pt-pt" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_nl" type="text_nl" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_lv" type="text_lv" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_lt" type="text_lt" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_it" type="text_it" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_hr" type="text_hr" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_fr" type="text_fr" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_fi" type="text_fi" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_et" type="text_et" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_es" type="text_es" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_en" type="text_en" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_de" type="text_de" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_da" type="text_da" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
-        <field name="i18n_label_bg" type="text_bg" indexed="true" stored="true" termVectors="true" omitNorms="true" default="_____"/>
+        <field name="i18n_label_sr" type="text_sr" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_pt-pt" type="text_pt-pt" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_nl" type="text_nl" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_lv" type="text_lv" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_lt" type="text_lt" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_it" type="text_it" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_hr" type="text_hr" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_fr" type="text_fr" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_fi" type="text_fi" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_et" type="text_et" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_es" type="text_es" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_en" type="text_en" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_de" type="text_de" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_da" type="text_da" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="i18n_label_bg" type="text_bg" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+
+        <copyField source="i18n_label_*" dest="tws_label_*"/>
+        <copyField source="i18n_content_*" dest="tws_content_*"/>
+
+        <field name="label_background" type="backgroundStandard" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="content_background" type="backgroundStandard" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <copyField source="i18n_label_*" dest="label_background"/>
+        <copyField source="i18n_content_*" dest="content_background"/>
+
+        <!--
+        <field name="label_phonetic" type="phonetic_en" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <field name="content_phonetic" type="phonetic_en" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____"/>
+        <copyField source="label_background" dest="label_phonetic"/>
+        <copyField source="content_background" dest="content_phonetic"/> -->
+
+        <!-- TODO: sorting should be language dependent hack here -->
+        <!-- default field with all languages -->
+        <field name="label" type="text" indexed="true" stored="false" termVectors="false" omitNorms="true" default="_____" multiValued="true"/>
         <!-- The string version of the title is used for sorting -->
         <copyField source="label" dest="sort_label"/>
+        <copyField source="i18n_label_*" dest="label"/>
 
-        <!-- content is the default field for full text search - dump crap here -->
-        <field name="content" type="text" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_sr" type="text_sr" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_pt-pt" type="text_pt-pt" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_nl" type="text_nl" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_lv" type="text_lv" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_lt" type="text_lt" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_it" type="text_it" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_hr" type="text_hr" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_fr" type="text_fr" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_fi" type="text_fi" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_et" type="text_et" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_es" type="text_es" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_en" type="text_en" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_de" type="text_de" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_da" type="text_da" indexed="true" stored="true" termVectors="true"/>
-        <field name="i18n_content_bg" type="text_bg" indexed="true" stored="true" termVectors="true"/>
-        <field name="teaser" type="text" indexed="false" stored="true"/>
+
+
+        <!-- content is the default field for full text search - dump relevant words in each language here -->
+        <!-- <field name="content" type="text" indexed="true"/> -->
+        <field name="i18n_content_sr" type="text_sr" indexed="true" multiValued="true"/>
+        <field name="i18n_content_pt-pt" type="text_pt-pt" indexed="true" multiValued="true"/>
+        <field name="i18n_content_nl" type="text_nl" indexed="true" multiValued="true"/>
+        <field name="i18n_content_lv" type="text_lv" indexed="true" multiValued="true"/>
+        <field name="i18n_content_lt" type="text_lt" indexed="true" multiValued="true"/>
+        <field name="i18n_content_it" type="text_it" indexed="true" multiValued="true"/>
+        <field name="i18n_content_hr" type="text_hr" indexed="true" multiValued="true"/>
+        <field name="i18n_content_fr" type="text_fr" indexed="true" multiValued="true"/>
+        <field name="i18n_content_fi" type="text_fi" indexed="true" multiValued="true"/>
+        <field name="i18n_content_et" type="text_et" indexed="true" multiValued="true"/>
+        <field name="i18n_content_es" type="text_es" indexed="true" multiValued="true"/>
+        <field name="i18n_content_en" type="text_en" indexed="true" multiValued="true"/>
+        <field name="i18n_content_de" type="text_de" indexed="true" multiValued="true"/>
+        <field name="i18n_content_da" type="text_da" indexed="true" multiValued="true"/>
+        <field name="i18n_content_bg" type="text_bg" indexed="true" multiValued="true"/>
+
+
+        <!-- a teaser in each language -->
+        <!-- <field name="teaser" type="text" indexed="false" stored="true"/> -->
         <field name="i18n_teaser_sr" type="text_sr" indexed="false" stored="true"/>
         <field name="i18n_teaser_pt-pt" type="text_pt-pt" indexed="false" stored="true"/>
         <field name="i18n_teaser_nl" type="text_nl" indexed="false" stored="true"/>
@@ -1121,6 +1160,8 @@
         <field name="i18n_teaser_de" type="text_de" indexed="false" stored="true"/>
         <field name="i18n_teaser_da" type="text_da" indexed="false" stored="true"/>
         <field name="i18n_teaser_bg" type="text_bg" indexed="false" stored="true"/>
+
+        <!-- ?? TODO: PL: where is this used ? -->
         <field name="path" type="string" indexed="true" stored="true"/>
         <field name="path_alias" type="text" indexed="true" stored="true" termVectors="true" omitNorms="true"/>
         <field name="i18n_path_alias_sr" type="text_sr" indexed="true" stored="true" termVectors="true" omitNorms="true"/>
@@ -1198,7 +1239,7 @@ or to add multiple fields to the same field for easier/faster searching.  -->
         <copyField source="i18n_label_de" dest="i18n_spell_de"/>
         <copyField source="i18n_label_da" dest="i18n_spell_da"/>
         <copyField source="i18n_label_bg" dest="i18n_spell_bg"/>
-        <copyField source="content" dest="spell"/>
+        <!-- <copyField source="content" dest="spell"/> -->
         <copyField source="i18n_content_sr" dest="i18n_spell_sr"/>
         <copyField source="i18n_content_pt-pt" dest="i18n_spell_pt-pt"/>
         <copyField source="i18n_content_nl" dest="i18n_spell_nl"/>
@@ -1407,7 +1448,7 @@ We use long for integer since 64 bit ints are now common in PHP. -->
         <field name="location" indexed="true" stored="true" multiValued="false" type="string"/>
 
         <!-- eo_description: description of the educational resource -->
-        <field name="eo_description" indexed="true" stored="true" multiValued="false" type="string"/>
+        <!-- <field name="eo_description" indexed="true" stored="true" multiValued="false" type="string"/> -->
 
         <!-- Most comments field -->
         <field name="comment_count" indexed="true" stored="true" multiValued="false" type="long"/>
@@ -1440,7 +1481,7 @@ We use long for integer since 64 bit ints are now common in PHP. -->
     <uniqueKey>id</uniqueKey>
 
     <!-- field for the QueryParser to use when an explicit fieldname is absent -->
-    <defaultSearchField>content</defaultSearchField>
+    <defaultSearchField>label_background</defaultSearchField>
 
     <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
     <solrQueryParser defaultOperator="OR"/>
