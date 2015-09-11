@@ -63,44 +63,90 @@
  *
  * @ingroup themeable
  */
+
+// find out the current language
+global $language;
+$lang = $language;
+//dd("Language: "); dd($lang);
+if(gettype($lang)==="object") {
+    $lang = $lang->language;
+}
+if(gettype($lang)==="NULL" || $lang==="") {
+    //$lang = $user -> language;
+    if(!$lang) $lang="en";
+}
+
+$fields = $result['fields'];
+
+// find out title
+$title_aside=$title;
+//dd("Fields:");
+//dd($result["fields"]);
+
+$title = odsSearchApacheSolrDrupal_findFirstSignificant(array(
+    $fields["i18n_label_$lang"],
+    $fields["label"],
+    $title_aside,
+    t("Missing title")));
+
+$teaser = odsSearchApacheSolrDrupal_findFirstSignificant(array(
+    $fields["i18n_teaser_$lang"],
+    $fields["teaser"],
+    t("Missing description")));
+
+$source = $source = odsSearchApacheSolrDrupal_findFirstSignificant(array(
+    $fields['source']), t("Missing source"));
+
+$author = $fields['author'];
+if(isset($author)) $author = trim($author);
+if ($author==="Usuario" || $author==="Unknown") $author = "";
+if($author!=="") $source.", ".$author;
+
+$url = url("node/".$fields['entity_id']);
+
+/* if($result["fields"]["i18n_label_$lang"] && $result["fields"]["i18n_label_$lang"]!="____") {
+    $title = $result["fields"]["i18n_label_$lang"];
+    print("<!-- title from i18n_label_$lang -->");
+}  elseif($result["fields"]["label"] && $result["fields"]["label"]!="____") {
+    $title=$result["fields"]["label"];
+    print("<!-- title from label -->");
+}
+if(!$title || $title=="____") {
+    $title = $title_aside;
+    print("<!-- missing title -->");
+}
+if(!$title || $title=="_____") {
+    $title = "Missing-title";
+    print("<!-- missing title -->");
+}*/
 ?>
 <li class="<?php print $classes; ?>"<?php print $attributes; ?>>
   <?php print render($title_prefix); ?>
-  <h3 class="title"<?php print $title_attributes; ?>>
-    <a href="<?php print $url; ?>" style="text-decoration:none" title="Go to the summary page">
-      <?php print $title; ?>
-    </a>
-  </h3>
-  <?php print render($title_suffix); ?>
-  <?php $fields = $result['fields']; ?>
+  <h3 class="title"<?php print $title_attributes;
+    ?>><a href="<?php print $url ?>" style="text-decoration:none" title="<?php print t('Go to the summary page')
+      ?>"><?php print $title; ?></a></h3><!-- score: <?php print $result["score"] ?> --><?php print render($title_suffix); ?>
   <div class="search-snippet-info">
     <table>
 	<tr>
 	  <?php if ($fields['source']){ ?>
 	    <td rowspan=2 valign="middle">
-	      <div style = "width:100px; overflow:hidden;">
+	      <div style = "width:100px; overflow:hidden;"><a href="<?php print $url?>">
 		<?php global $base_url; $logo_url = str_replace(" ", "%20",$base_url."/sites/default/files/repository_logos/".$fields['source'].".png"); ?>
-		<?php if (odsSearchApacheSolrDrupal_url_exists($logo_url)) { ?>
-			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/'.$fields['source'].'.png';?>" />
-		<?php } else { ?>
+		<?php if (odsSearchApacheSolrDrupal_url_exists($logo_url)) { ?><!-- logo available -->
+			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/'.$fields['source'].'.png';?>" alt="<?php print $fields['source']?>" />
+		<?php } else { ?><!-- logo unavailable -->
 			<img src="<?php global $base_url; print $base_url.'/sites/default/files/repository_logos/imageNotAvailable.png';?>" />
 		<?php } ?>
-	      </div>
+              </a></div>
 	    </td>
           <?php } else { ?>
 	    <td rowspan=2></td>
 	  <?php } ?>
-        <td>
-          <?php if ($fields['eo_description']): ?>
-            <div class="search-info" style="font-size:12px;"><?php print $fields['eo_description']; ?></div>
-    	    <?php endif; ?>
-        </td>
+        <td class="search-teaser"><a href="<?php print $url?>"><?php print $teaser ?></a></td>
 	</tr>
 	<tr>
-	  <td>
-    	    <?php if ($fields['source']): ?>
-      	      <div class="search-info" style="font-size:12px"><b><?php print t("Source: "); ?></b><?php print $fields['source']; ?></div>
-    	    <?php endif; ?>
+	  <td><div class="search-info" style="font-size:12px"><a href="<?php print $url?>"><b><?php
+                      print t("Source: "); ?></b> <?php print $source ?></a></div>
 	  </td>
         </tr>
     </table>

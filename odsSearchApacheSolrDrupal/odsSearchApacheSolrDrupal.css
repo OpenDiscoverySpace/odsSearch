@@ -52,6 +52,13 @@
 		width: 8%;
 		margin: 0px 5px 5px 0px;
 }
+.search-snippet-info a {
+    text-decoration: none !important ;
+    color: #3a3a3a !important ;
+    font-weight: normal !important ;
+}
 
-
+.search-info {
+    color:black;
+}
 

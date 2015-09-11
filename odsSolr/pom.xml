@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>eu.opendiscoveryspace</groupId>
     <artifactId>ods-search-solrcomp</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
     <name>ODSSearch SOLR Component</name>
     <packaging>jar</packaging>
     <description>The component of ODS Search living inside the SOLR server.</description>

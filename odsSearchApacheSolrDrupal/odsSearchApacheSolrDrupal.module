@@ -4,16 +4,65 @@
 * This function checks if the logo is correct and it can be used as a valid image for
 * an educational resource in the search results page (see search-result.tpl.php).
 */
+
 function odsSearchApacheSolrDrupal_url_exists($url){
-  $ch = @curl_init($url);
-  @curl_setopt($ch, CURLOPT_HEADER, TRUE);
-  @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
-  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
-  @curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-  $status = array();
-  preg_match('/HTTP\/.* ([0-9]+) .*/', @curl_exec($ch) , $status);
-  return ($status[1] == 200);
+    // following https://www.lullabot.com/articles/a-beginners-guide-to-caching-data-in-drupal-7
+    ////dd("odsSearchApacheSolrDrupal_url_exists being called ");
+    $reposURLsAvailable = &drupal_static(__FUNCTION__);
+    if (!isset($reposURLsAvailable)) {
+        $cache = cache_get('odsSearchApacheSolrDrupal.reposURLsAvailable','cache');
+        if (isset($cache)) {
+            $reposURLsAvailable = $cache->data;
+            ////dd("repossURLsAvailable fetched from cache");
+            ////dd($reposURLsAvailable);
+        } else {
+            $reposURLsAvailable = array();
+            ////dd("reposURLsAvailable created");
+        }
+    }
+    $result = $reposURLsAvailable[$url];
+    ////dd("reposURLsAvailable is ");
+    ////dd($reposURLsAvailable);
+    if(!isset($result)) {
+        ////dd("reposURLsAvailable $url being computed.");
+        $ch = @curl_init($url);
+        @curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        @curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+        @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
+        @curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        $status = array();
+        preg_match('/HTTP\/.* ([0-9]+) .*/', @curl_exec($ch) , $status);
+        ////dd("status is"); //dd($status);
+        if(($status[1]==200)) $result = true;
+            else $result = false;
+        $reposURLsAvailable[$url] = $result;
+        cache_set('odsSearchApacheSolrDrupal.reposURLsAvailable', $reposURLsAvailable, 'cache', REQUEST_TIME+1000*60*60);
+        ////dd("result is $result");
+    }
+    return $result;
 }
+
+function odsSearchApacheSolrDrupal_findFirstSignificant($strings) {
+    //dd("findFirstSignificant being called with ");
+    //dd($strings);
+    foreach($strings as $string) {
+        //dd("trying: $string");
+        //dd("type: ".gettype($string));
+        $t = gettype($string);
+
+        if($t==="string") {
+            //dd("string");
+            $string = trim($string);
+            if($string!=="" && $string!="_____") return $string;
+        } else if ($t==="array") {
+            //dd("array");
+            $x = odsSearchApacheSolrDrupal_findFirstSignificant($string);
+            if($x!=="Missing title") return $x;
+        }
+    }
+    return "Missing title";
+}
+
 
 /**
 * This hook prepares the query by adding parameters, sorts, etc.
@@ -56,21 +105,51 @@ function odsSearchApacheSolrDrupal_apachesolr_query_prepare($query){
 */
 function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
     global $user, $language;
+    $queryLang = $language->language;
+
     // returned fields
     $b= $query->getParams();
     $a = $b['fl'];
     $a[]="updated";
     $a[]="author";
     $a[]="source";
-    $a[]="granularity";
-    $a[]="location";
-    $a[]="eo_description";
+    //$a[]="granularity";
+    //$a[]="location";
+    $a[]="label";
+    $a[]="teaser";
+    $a[]="i18n_teaser_".$queryLang;
+    $a[]="i18n_label_".$queryLang;
+    //$a = sort($a);
 
     $query->addParam('fl', $a);
     $query->addParam('odsUserLang', $user->language);
-    $query->addParam('odsLang', $language->language);
+    $query->addParam('odsLang', $queryLang);
 
+    // ================ read profile to send it to the query expansion to favour particular media-types ====================
+    $dbquery = db_select('profile', 'n');
+    $dbquery->condition('n.uid', $user->uid, '=')
+        ->fields('n', array('pid'))
+        ->range(0, 50);
+    $results = $dbquery->execute();
+    if(!empty($results)) {
+        $pid = null;
+        foreach($results as $result) {
+            $pid = $result->pid;
+        }
+        if($pid!=null) {
+            $comp = retrieve_competence_data($pid);
+            dd("Has a competency profile.");
+            foreach($comp as $key=>$value) {
+                $query->addParam("c_".substr($key, 6), $value);
+            }
+        }
+    } else {
+        dd("No competency profile.");
+    }
+
+    //$query->addParam("hl.fl", "i18n_label_*,i18n_teaser_*,label,teaser");
 }
+
 
 /**
 * This hook builds the documents before sending them to Solr. The function is the follow-up for apachesolr_update_index.
@@ -78,71 +157,185 @@ function odsSearchApacheSolrDrupal_apachesolr_query_alter($query) {
 */
 function odsSearchApacheSolrDrupal_apachesolr_index_document_build(ApacheSolrDocument $document, $entity, $entity_type, $env_id) {
     try {
+        dd("Starting-indexing. entity: ". strval($entity->nid) . ", title \"".strval($entity->title). "\" (".strval(time()).").");
+        $startTime = microtime(true);
+        //dd($entity);
+        $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga','hu','pl','ro', 'ru','sv');
 
-        //Author fullname.
+        //get title, if no title in current language, we crawl the array for the first available title
+        /* probably useless and done below
+        $label = $entity->title_field[$entity->language][0]['value'];
+        if(strlen($label)==0) {
+            foreach($indexerLanguages as $lang){
+                $label = $entity->title_field[$lang][0]['value'];
+                if(strlen($label)>0) break;
+            }
+        }
+        if(strlen($label)==0) {$label= "-missing-title-";}
+        $document->addField("label",$label); */
+        $label = "-missing-title-";
+        foreach($indexerLanguages as $lang){
+            $lab = $entity->title_field[$lang][0]['value'];
+            if($lab) {
+                $document->setField("i18n_label_".$lang, $lab);
+                if(!$label) $label = $lab;
+            }
+        }
+        $document->setField("label", $label);
+
+        // ======================= Author fullname. =============
         $document->addField("author",  $entity->field_author_fullname['und'][0]['value']);
+        $document->addField("content_background",  $entity->field_author_fullname['und'][0]['value']);
 
-        //Data provider (repository name)
-        //Get taxonomy term name from tid
-        $dataProvider_tid = $entity->field_data_provider['und'][0]['tid'];
-        $term = taxonomy_term_load($dataProvider_tid);
-        $name = $term->name;
-        $document->addField("source",  $name);
-	
-        //Granularity
-        //Get taxonomy term name from tid
-        $granularity_tid = $entity->field_aggregation_level['und'][0]['tid'];
-        $term = taxonomy_term_load($granularity_tid);
-        $name = $term->name;
-        $document->addField("granularity",  $name);
 
         //Get the technical location of the resource
         $document->addField("location", $entity->field_resource_link['und'][0]['url']);
 
-        //Indexing the description in all languages
-        $indexerLanguages= array('en','nl','fr','de','el','it','es','hr','bg','da','fi','et', 'lv', 'lt', 'pt','sr','ga','cs','hu','pl','ro', 'ru','sv');
+        // the id
         $document->addField("loid",  $entity->field_lo_identifier['und'][0]['value']);
+
+        //Indexing the description in all languages
+        $teaser = ""; $content = "";
         foreach($indexerLanguages as $lang){
-            $document->addField("i18n_content_".$lang,  $entity->field_eo_description[$lang][0]['value']);
+            $description = $entity->field_eo_description[$lang][0]['value'];
+            if($description==="" || strlen($description)==0) continue;
+            $document->setField("i18n_content_".$lang,  $description);
+            if($content==="") $content = $description;
+            if(strlen($description)>400) {
+                $description = substr($description, 0,400);
+                $pos = strrpos($description, " ");
+                if(400-$pos<50) $description = substr($description, 0, $pos);
+                $description = $description. "...";
+            }
+            //dd("Found description of length: ".strlen($description));
+            $document->setField("i18n_teaser_".$lang,  $description);
+            if($teaser==="") $teaser = $description;
         }
-        //Get the description of the resource.
-        //First, we check if we have a description with the same language of the portal.
-        global $language;
-        //We assume that we will have always a site language.
-        $site_language = $language->language;
-        $description = $entity->field_eo_description[$site_language][0]['value'];
-        if ($description != NULL) {
-            $document->addField("eo_description", $description);
-        } else {
-            //We don't have a title with the same language of the portal, then we check if
-            //we have a description with the same language of the node.
-            $node_language = $entity->language;
-            if ($node_language != NULL) {
-                $description = $entity->field_eo_description[$node_language][0]['value'];
-                if ($description != NULL){
-                    $document->addField("eo_description", $description);
+        if($content!=="") $document->setField("content",  $content);
+        if($teaser!=="")  {
+            $entity->teaser = $teaser;
+            $document->setField("teaser", $teaser);
+        }
+
+
+
+        // ====================== disciplines ==============================================
+        odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames(
+            $entity->field_classification_discipline['und'],
+            "discipline", $document, $indexerLanguages);
+
+        //Data provider (repository name)
+        $dataProvider_tid = $entity->field_data_provider['und'][0]['tid'];
+        $term = taxonomy_term_load($dataProvider_tid);
+        $name = $term->name;
+        $document->addField("source",  $name);
+        // also in plain text
+        $document->addField("content_background", $name);
+
+        //Granularity
+        $granularity_tid = $entity->field_aggregation_level['und'][0]['tid'];
+        $term = taxonomy_term_load($granularity_tid);
+        $name = $term->name;
+        $document->addField("granularity",  $name);
+        odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames(
+            $entity->field_aggregation_level['und'],
+            "granularity", $document, $indexerLanguages);
+
+        // ======== language into content =====================
+        odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames(
+            $entity->field_general_language['und'],
+            "language", $document, $indexerLanguages);
+
+        // ============ educational context "name" (primaire, grundschule, ...) into content =================
+        odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames(
+            $entity->field_educational_context['und'],
+            "eduContext", $document, $indexerLanguages);
+
+        // ================ learning resource type ================================
+        odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames(
+            $entity->field_learning_resource_type['und'],
+            "learningResourceType", $document, $indexerLanguages);
+
+        // ====================== tags ====================================
+        foreach($entity->field_edu_tags['und'] as $tag) {
+            //$document->addField("im_field_tags", $tag->name);
+            // taxonomy ids are already copied
+            $document->addField("content_background", $tag->name);
+        }
+
+        // =================== rating (votingapi) ================================
+
+        $widget_id = "2"; // TODO: adjust based on installation: voting API widget number (obtained as /admin/structure/rate/2/edit when editing)
+        $nrate = intval(rate_get_results('node', $entity->nid, $widget_id));
+        if($nrate['count'] != 0) {
+            $document->addField("ratingMean", $nrate['rating']);
+            $document->addField("ratingCount", $nrate['count']);
+        }
+        // THINKME: special wording for license? public domain? CC-BY???
+
+        // THINKME: ? date into content (with month in each language) ?
+
+        // ========================================
+        $ageRange = "";
+        foreach($entity->field_educational_typicalagerang as $m) {
+            foreach($m as $x) {
+                $s = $x["value"];
+                if(strlen($s>0)) {
+                    $ageRange = $s;
                 }
             }
-            if ($description == NULL){            
-                //The node language is null or we don't have description with the same language of the node, 
-                //then we have to check if we have a description in some language (we get the language of the field).
-                //$description_language will that the value of 'und' when the $entity does not have any
-                //description in any language.
-                $description_language = field_language('node', $entity, 'field_eo_description');
-                $description = $entity->field_eo_description[$description_language][0]['value'];
-                if ($description != NULL) {
-                    $document->addField("eo_description", $description);
-                } else {                        
-                    //We don't have the description in any language. Therefore, we will display a message 
-                    //remarking this situation.
-                    $document->addField("eo_description", "There is no available description for this resource");
+        }
+        $document->addField("ageRange", $ageRange);
+
+        try {
+            if (isset($ageRange) && strlen($ageRange) > 0) {
+                $parts = explode("-", $ageRange);
+                if (count($parts) == 1) {
+                    if (substr($ageRange, 0, 1) === "-") {
+                        $min = 0;
+                        if($parts[0]==="U") $max = 20;
+                        else $max = intval($parts[0]);
+                    } else if (substr($ageRange, strlen($ageRange) - 1, strlen($ageRange)) === "-") {
+                        if($parts[0]==="U") $min = 20;
+                        else $min = intval($parts[0]);
+                        $max = 20;
+                    }
+                } else {
+                    if($parts[0]==="U") $min = 0;
+                    else $min = intval($parts[0]);
+                    if($parts[1]==="U") $max = 20;
+                    else $max = intval($parts[1]);
                 }
             }
+        } catch (Exception $ex1) { dd($ex1); }
+        if(!isset($min) || $min<1) $min = 1;
+        if(!isset($max) || $max>20) $max = 20;
+        $i = $min;
+        while($i <= $max) {
+            $document->addField("age", strval($i));
+            $i++;
         }
+
+
+        $indexDuration = microtime(true)-$startTime;
+        dd("Finished indexing ".$entity->nid." (".strval(time()). "). Indexed in ". strval($indexDuration)." seconds.");
     } catch(Exception $x) {
         dd("Exception at indexing: " .$x);
     }
  }
+
+function odsSearchApacheSolrDrupal_addTaxonomyNodeLocalizedNames($taxons, $tmFieldi18nName, $indexDocument, $indexerLanguages) {
+    foreach($disciplines = $taxons as $taxon) {
+        $i18n_object= i18n_get_object('taxonomy_term', $taxon["tid"]);
+        foreach($indexerLanguages as $lang) {
+            $translated_term = $i18n_object->localize($lang);
+            $tt = $translated_term->name;
+            $indexDocument->addField("i18n_tm_".$lang."_".$tmFieldi18nName,  $tt); // THINKME: really?
+            $indexDocument->addField("i18n_content_".$lang, $tt);
+            // this will be automatically copied to content_background (multilingual whitespace)
+        }
+    };
+}
 
 // FACET HOOKS
 /**
@@ -178,5 +371,6 @@ function odsSearchApacheSolrDrupal_facetapi_facet_info(array $searcher_info) {
 }
 
 // css adjustments
-drupal_add_css( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/odsSearchApacheSolrDrupal.css', array('every_page' =>FALSE));
+drupal_add_css( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/odsSearchApacheSolrDrupal.css', array('every_page' =>FALSE, 'preprocess'=>FALSE));
  
+drupal_add_js( drupal_get_path('module', 'odsSearchApacheSolrDrupal') . '/keepIndexing.js', array('every_page' =>FALSE, 'preprocess'=>FALSE));
